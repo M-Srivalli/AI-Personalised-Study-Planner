@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Personalized Study Planner | SWI-Prolog CSP Engine</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- TOP APP HEADER -->
+        <header class="app-header">
+            <div class="header-left">
+                <div class="logo-icon">⚡</div>
+                <div>
+                    <h1>AI Personalized Study Planner</h1>
+                    <p class="subtitle">Powered by SWI-Prolog Logic Engine &bull; Constraint Satisfaction Problem (CSP)</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <span class="status-badge" id="engineStatusBadge">
+                    <span class="pulse-dot"></span> SWI-Prolog Engine Active
+                </span>
+                <button class="btn btn-secondary btn-sm" id="btnResetSample">Load Sample Data</button>
+            </div>
+        </header>
+
+        <!-- NOTIFICATION / CONFLICT BANNER -->
+        <div id="alertBanner" class="alert-banner hidden">
+            <div class="alert-content">
+                <span class="alert-icon" id="alertIcon">ℹ️</span>
+                <span id="alertMessage">Sample data loaded.</span>
+            </div>
+            <button class="btn-close" onclick="closeAlert()">×</button>
+        </div>
+
+        <!-- MAIN DASHBOARD GRID -->
+        <div class="dashboard-grid">
+            
+            <!-- LEFT COLUMN: CONTROLS & INPUTS -->
+            <div class="col-left">
+                
+                <!-- 1. STUDENT PROFILE CARD -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>👤 Student Profile</h2>
+                        <span class="badge-soft">Preferences</span>
+                    </div>
+                    <form id="studentForm">
+                        <div class="form-group">
+                            <label for="studentName">Student Name</label>
+                            <input type="text" id="studentName" value="Alex Rivera" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group flex-1">
+                                <label for="dailyLimit">Daily Max Hours</label>
+                                <input type="number" id="dailyLimit" min="1" max="8" value="3" required>
+                            </div>
+                            <div class="form-group flex-1">
+                                <label for="sessionDuration">Session Length</label>
+                                <select id="sessionDuration">
+                                    <option value="1">1 Hour</option>
+                                    <option value="2">2 Hours</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="preferredTime">Preferred Study Period</label>
+                            <select id="preferredTime">
+                                <option value="morning">Morning (09:00 - 12:00)</option>
+                                <option value="afternoon">Afternoon (14:00 - 17:00)</option>
+                                <option value="evening">Evening (18:00 - 21:00)</option>
+                                <option value="any">Any Time / Flexible</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-outline w-100">Update Profile</button>
+                    </form>
+                </div>
+
+                <!-- 2. ADD SUBJECT FORM -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📚 Add Subject</h2>
+                        <span class="badge-soft">Domain Variables</span>
+                    </div>
+                    <form id="addSubjectForm">
+                        <div class="form-group">
+                            <label for="newSubName">Subject Name</label>
+                            <input type="text" id="newSubName" placeholder="e.g. Theory of Computation" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group flex-1">
+                                <label for="newSubDiff">Difficulty</label>
+                                <select id="newSubDiff">
+                                    <option value="hard">Hard (High load)</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="easy">Easy (Quick review)</option>
+                                </select>
+                            </div>
+                            <div class="form-group flex-1">
+                                <label for="newSubDays">Days to Exam</label>
+                                <input type="number" id="newSubDays" min="1" max="30" value="5" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="newSubWeak">Weakness / Mastery Level</label>
+                            <select id="newSubWeak">
+                                <option value="weak">Weak (High Remedial Focus)</option>
+                                <option value="average" selected>Average (Moderate Focus)</option>
+                                <option value="strong">Strong (Quick Consolidation)</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">+ Add Subject to KB</button>
+                    </form>
+                </div>
+
+                <!-- 3. CSP CONCEPTS EXPLAINER WIDGET -->
+                <div class="card csp-explainer-card">
+                    <div class="card-header">
+                        <h2>🧠 AI Lab CSP Formulation</h2>
+                    </div>
+                    <div class="csp-explainer-content">
+                        <div class="csp-fact">
+                            <strong>Variables:</strong>
+                            <span>Study sessions required for each subject (derived from priority score).</span>
+                        </div>
+                        <div class="csp-fact">
+                            <strong>Domains:</strong>
+                            <span>Valid time slots satisfying exam deadline and daily limits.</span>
+                        </div>
+                        <div class="csp-fact">
+                            <strong>Constraints:</strong>
+                            <span>No slot overlap &bull; Daily hour bounds &bull; Max 2 sess/day/subject &bull; Exam deadline.</span>
+                        </div>
+                        <div class="csp-fact">
+                            <strong>Forward Checking:</strong>
+                            <span>Prunes assigned slots & full days from future domains; fails immediately upon domain wipeout.</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: RESULTS, TIMETABLE & AI REASONING -->
+            <div class="col-right">
+
+                <!-- ACTION BUTTONS ROW -->
+                <div class="action-bar-card card">
+                    <div class="action-bar-left">
+                        <button class="btn btn-accent" id="btnCalcPriorities">
+                            <span>🎯</span> 1. Calculate Priorities
+                        </button>
+                        <button class="btn btn-accent" id="btnGenRecs">
+                            <span>💡</span> 2. Generate Recommendations
+                        </button>
+                        <button class="btn btn-primary" id="btnGenTimetable">
+                            <span>🗓️</span> 3. Solve CSP & Generate Study Plan
+                        </button>
+                    </div>
+                    <div class="action-bar-right">
+                        <button class="btn btn-outline btn-sm" id="btnRunLabDemo">
+                            <span>🚀</span> Run Full Lab Demo
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CSP ENGINE METRICS BANNER -->
+                <div class="card metrics-card" id="metricsCard">
+                    <div class="metrics-grid">
+                        <div class="metric-item">
+                            <span class="metric-val" id="metricVars">13</span>
+                            <span class="metric-label">CSP Variables</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-val" id="metricAssignments">13</span>
+                            <span class="metric-label">Assigned Sessions</span>
+                        </div>
+                        <div class="metric-item highlight">
+                            <span class="metric-val" id="metricPrunings">18</span>
+                            <span class="metric-label">Forward Prunings</span>
+                        </div>
+                        <div class="metric-item highlight">
+                            <span class="metric-val" id="metricWipeouts">1</span>
+                            <span class="metric-label">Domain Wipeouts Caught</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-val" id="metricBacktracks">2</span>
+                            <span class="metric-label">Backtracks Handled</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NEXT FOCUS HERO CARD -->
+                <div class="card hero-focus-card" id="heroFocusCard">
+                    <div class="hero-header">
+                        <span class="hero-badge">AI NEXT FOCUS</span>
+                        <span class="hero-subject-name" id="heroSubjectName">Discrete Mathematics</span>
+                    </div>
+                    <p class="hero-plan-text" id="heroPlanText">
+                        Loading AI recommendation...
+                    </p>
+                </div>
+
+                <!-- SUBJECTS & PRIORITIES TABLE CARD -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📊 Subject Priorities (Rule-Based Weighted Scoring)</h2>
+                        <span class="badge-soft" id="subjectCountBadge">5 Subjects</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table" id="prioritiesTable">
+                            <thead>
+                                <tr>
+                                    <th>Subject</th>
+                                    <th>Difficulty</th>
+                                    <th>Exam In</th>
+                                    <th>Weakness</th>
+                                    <th>Diff Score</th>
+                                    <th>Urg Score</th>
+                                    <th>Weak Score</th>
+                                    <th>Total (/50)</th>
+                                    <th>Allocated</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="prioritiesTableBody">
+                                <!-- Populated dynamically by script.js -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- AI EXPLANATION & REASONING SECTION -->
+                <div class="card" id="explanationSection">
+                    <div class="card-header">
+                        <h2>🤖 AI Logical Reasoning & Explanations</h2>
+                        <span class="badge-soft">Rule Deductions</span>
+                    </div>
+                    <div class="explanations-list" id="explanationsList">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- PERSONALIZED TIMETABLE CARD -->
+                <div class="card" id="timetableCard">
+                    <div class="card-header">
+                        <h2>🗓️ Personalized Conflict-Free Weekly Timetable</h2>
+                        <div class="view-toggles">
+                            <button class="btn btn-sm btn-outline active" id="btnToggleGrid">Grid View</button>
+                            <button class="btn btn-sm btn-outline" id="btnToggleList">List View</button>
+                        </div>
+                    </div>
+
+                    <!-- 7-DAY SCHEDULE GRID -->
+                    <div class="timetable-grid-wrapper" id="timetableGridWrapper">
+                        <div class="schedule-grid" id="scheduleGrid">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- SCHEDULE LIST VIEW (Hidden by default) -->
+                    <div class="timetable-list-view hidden" id="timetableListView">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Day</th>
+                                    <th>Time Slot</th>
+                                    <th>Period</th>
+                                    <th>Subject Name</th>
+                                    <th>Session ID</th>
+                                </tr>
+                            </thead>
+                            <tbody id="timetableListBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <footer class="app-footer">
+            <p>AI Lab Project: AI Personalized Study Planner Using SWI-Prolog &bull; CSP, Backtracking, Forward Checking</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
